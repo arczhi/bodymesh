@@ -130,13 +130,17 @@ The brief is meant to arrive on its own:
 50 8 * * *  cd /opt/bodymesh && /opt/bodymesh/.venv/bin/bm daily >> /var/log/bodymesh.log 2>&1
 ```
 
-Then let whatever chat gateway you use read `bm daily` output at 09:00 (OpenClaw's cron, a `curl` to a webhook, or plain `sendmail`). See `docs/agent-integration.md`.
+Then let whatever chat gateway you use read `bm daily` output at 09:00 (a cron job plus a webhook is enough; the deployed setup uses nanobot with a WeChat channel). See `docs/agent-integration.md` — it documents the running deployment, including the three traps that cost real hours.
 
 ## Deploy
 
 ```bash
 sudo bash scripts/install-vps.sh   # python + venv + systemd timer, no root daemons
 ```
+
+The reference deployment (2 vCPU / 1.6 GB, Ubuntu 24.04) runs the data plane under
+a systemd timer and a `nanobot` gateway for chat: ~9 s per 12-day sync, ~213 MB for
+the gateway, 8–12 s for a morning brief. Details in `docs/agent-integration.md`.
 
 Garmin OAuth tokens live outside the repo (`~/.garminconnect`), the model key lives in `/etc/bodymesh/bodymesh.env`, and the database lives in `/var/lib/bodymesh/`. `.gitignore` refuses all three.
 
