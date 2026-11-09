@@ -1,0 +1,41 @@
+# --- secrets: never in the repo ---
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+**/physarum.env
+garmin_tokens.json
+.garminconnect/
+*.token
+secrets/
+
+# --- personal data: the whole point of "your body, your file" ---
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+data/
+briefs/
+inbox/
+*.json.gz
+exports/
+
+# --- python ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# --- os / editor ---
+.DS_Store
+.idea/
+.vscode/
+*.log
