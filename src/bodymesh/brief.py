@@ -152,7 +152,9 @@ def render_markdown(data: dict[str, Any]) -> str:
     if data["signals"]:
         lines.append("### 身体信号")
         for s in data["signals"]:
-            mark = {"alert": "🔴", "watch": "🟡", "info": "·"}.get(s["severity"], "·")
+            # ASCII markers on purpose: a brief may travel through terminals,
+            # cron logs and chat gateways with wildly different locales.
+            mark = {"alert": "[!]", "watch": "[~]", "info": "[.]"}.get(s["severity"], "[.]")
             lines.append(f"- {mark} {s['text']}")
 
     if data["findings"]:
