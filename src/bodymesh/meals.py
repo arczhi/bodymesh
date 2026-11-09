@@ -58,7 +58,7 @@ def analyze_image(path: str | Path, hint: str | None = None) -> dict[str, Any]:
     """Estimate a meal from a photo using an image-capable chat model."""
     key = config.llm_key()
     if not key:
-        raise RuntimeError("no model key configured (set PHYSARUM_LLM_KEY or DEEPSEEK_API_KEY)")
+        raise RuntimeError("no model key configured (set BODYMESH_LLM_KEY or DEEPSEEK_API_KEY)")
     img = Path(path).expanduser()
     if not img.is_file():
         raise FileNotFoundError(str(img))

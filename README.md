@@ -1,9 +1,9 @@
-# Physarum 🧫
+# Bodymesh 🕸️
 
-> **A living data mesh for your body.**
-> Wearables give you numbers. Physarum turns them into a network you can ask questions of — and a daily brief that actually says something.
+> **Every number your body produces, woven into one mesh.**
+> A watch counts your steps, a scale weighs you, a photo of lunch hides 700 kcal and 30 g of protein. Bodymesh pulls those threads into a single SQLite mesh and hands you a daily brief that connects them.
 
-Named after *Physarum polycephalum*, the slime mold that solves mazes and rebuilds the Tokyo rail network out of nothing but food sources and hunger. That is the whole idea here: scattered points of evidence (a run, a bad night, a bowl of noodles) get connected into a network that finds the shortest path to a better body.
+The name is the idea: **body + mesh**. Not another dashboard, not another chatbot with a memory problem — the mesh underneath. Data goes in from any source, comes out as findings you can check, and any chat assistant can be the mouth on top of it.
 
 ```
         ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
@@ -13,13 +13,13 @@ Named after *Physarum polycephalum*, the slime mold that solves mazes and rebuil
                └──────────┬───────┴──────────────────┘
                           ▼
                  ┌─────────────────┐
-                 │    physarum.db  │  SQLite · one file · no server
+                 │     bodymesh.db │  SQLite · one file · no server
                  │ raw → daily →   │
                  │ derived findings│
                  └────────┬────────┘
                           ▼
               ┌───────────────────────┐
-              │  phy (CLI, --json)    │  the only tool surface
+              │   bm (CLI, --json)    │  the only tool surface
               └───────┬───────────────┘
                       ▼
         ┌───────────────────────────────┐
@@ -32,23 +32,23 @@ Named after *Physarum polycephalum*, the slime mold that solves mazes and rebuil
 Because the interesting part is not the chat window.
 
 - **Numbers must be computed, not narrated.** Every figure in the daily brief comes from `metrics.py` and can be reproduced byte-for-byte. The model only writes the coaching sentence on top. Ask it "why did you say my RHR was up?" and you get a SQL query back, not a vibe.
-- **The agent must be replaceable.** Physarum is a CLI with a stable `--json` contract. Swap DeepSeek for anything else, swap OpenClaw for a cron job plus `curl`, and the data plane keeps working.
+- **The agent must be replaceable.** Bodymesh is a CLI with a stable `--json` contract. Swap DeepSeek for anything else, swap OpenClaw for a cron job plus `curl`, and the data plane keeps working.
 - **Findings need evidence.** Each stored insight carries `r`, `n`, and the exact pairing rule used, so a correlation can be dismissed as easily as it was raised.
-- **One file beats a stack.** `physarum.db` is a portable graph of your body. `scp` it, `sqlite3` it, back it up with `cp`.
+- **One file beats a stack.** `bodymesh.db` is a portable graph of your body. `scp` it, `sqlite3` it, back it up with `cp`.
 
 ## Quick start
 
 ```bash
-git clone https://github.com/arczhi/physarum.git
-cd physarum
+git clone https://github.com/arczhi/bodymesh.git
+cd bodymesh
 uv venv .venv && source .venv/bin/activate
 uv pip install -e .
 
 export DEEPSEEK_API_KEY=sk-...        # used for food photos only
-phy init
-phy doctor                            # environment self-check
-phy sync --days 14                    # pull Garmin (needs ~/.garminconnect tokens)
-phy daily                             # yesterday: sync + findings + brief
+bm init
+bm doctor                            # environment self-check
+bm sync --days 14                    # pull Garmin (needs ~/.garminconnect tokens)
+bm daily                             # yesterday: sync + findings + brief
 ```
 
 Sample output:
@@ -76,23 +76,23 @@ Sample output:
 
 ## Command surface
 
-Everything is `phy <verb>`; add `--json` to any command for machine output.
+Everything is `bm <verb>`; add `--json` to any command for machine output.
 
 | Command | What it does |
 |---|---|
-| `phy init` | create the SQLite database |
-| `phy sync --days 14` | pull Garmin: daily wellness, activities, weigh-ins |
-| `phy daily` | sync + recompute findings + render the brief (the cron job) |
-| `phy brief --date 2026-11-08` | re-render any day's brief |
-| `phy status` | compact snapshot for "how am I doing?" |
-| `phy meal add --image lunch.jpg` | photo → structured nutrition |
-| `phy meal add -d "牛肉面" --kcal 780 --protein 32` | manual meal |
-| `phy meal list` | today's meals |
-| `phy body add --weight 96.3 --fat 24.1` | weigh-in |
-| `phy note add "膝盖有点紧"` | free-text note |
-| `phy trend --metric rhr --days 30` | ASCII trend |
-| `phy insights --days 30` | stored findings with evidence |
-| `phy doctor` | env/db/token self-check |
+| `bm init` | create the SQLite database |
+| `bm sync --days 14` | pull Garmin: daily wellness, activities, weigh-ins |
+| `bm daily` | sync + recompute findings + render the brief (the cron job) |
+| `bm brief --date 2026-11-08` | re-render any day's brief |
+| `bm status` | compact snapshot for "how am I doing?" |
+| `bm meal add --image lunch.jpg` | photo → structured nutrition |
+| `bm meal add -d "牛肉面" --kcal 780 --protein 32` | manual meal |
+| `bm meal list` | today's meals |
+| `bm body add --weight 96.3 --fat 24.1` | weigh-in |
+| `bm note add "膝盖有点紧"` | free-text note |
+| `bm trend --metric rhr --days 30` | ASCII trend |
+| `bm insights --days 30` | stored findings with evidence |
+| `bm doctor` | env/db/token self-check |
 
 ## Data model
 
@@ -127,10 +127,10 @@ The brief is meant to arrive on its own:
 
 ```bash
 # data refresh + brief generation, 08:50 local
-50 8 * * *  cd /opt/physarum && /opt/physarum/.venv/bin/phy daily >> /var/log/physarum.log 2>&1
+50 8 * * *  cd /opt/bodymesh && /opt/bodymesh/.venv/bin/bm daily >> /var/log/bodymesh.log 2>&1
 ```
 
-Then let whatever chat gateway you use read `phy daily` output at 09:00 (OpenClaw's cron, a `curl` to a webhook, or plain `sendmail`). See `docs/agent-integration.md`.
+Then let whatever chat gateway you use read `bm daily` output at 09:00 (OpenClaw's cron, a `curl` to a webhook, or plain `sendmail`). See `docs/agent-integration.md`.
 
 ## Deploy
 
@@ -138,7 +138,7 @@ Then let whatever chat gateway you use read `phy daily` output at 09:00 (OpenCla
 sudo bash scripts/install-vps.sh   # python + venv + systemd timer, no root daemons
 ```
 
-Garmin OAuth tokens live outside the repo (`~/.garminconnect`), the model key lives in `/etc/physarum/physarum.env`, and the database lives in `/var/lib/physarum/`. `.gitignore` refuses all three.
+Garmin OAuth tokens live outside the repo (`~/.garminconnect`), the model key lives in `/etc/bodymesh/bodymesh.env`, and the database lives in `/var/lib/bodymesh/`. `.gitignore` refuses all three.
 
 ## License
 

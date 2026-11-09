@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Physarum VPS installer — idempotent, no secrets, no root daemons.
+# Bodymesh VPS installer — idempotent, no secrets, no root daemons.
 # Tested on Ubuntu 24.04 (1.6 GB RAM is enough; the whole thing is stdlib + sqlite).
 #
 #   sudo bash scripts/install-vps.sh
 #
 set -euo pipefail
 
-APP_DIR=${APP_DIR:-/opt/physarum}
-DATA_DIR=${DATA_DIR:-/var/lib/physarum}
-LOG_DIR=${LOG_DIR:-/var/log/physarum}
-ENV_DIR=${ENV_DIR:-/etc/physarum}
-SERVICE_USER=${SERVICE_USER:-physarum}
+APP_DIR=${APP_DIR:-/opt/bodymesh}
+DATA_DIR=${DATA_DIR:-/var/lib/bodymesh}
+LOG_DIR=${LOG_DIR:-/var/log/bodymesh}
+ENV_DIR=${ENV_DIR:-/etc/bodymesh}
+SERVICE_USER=${SERVICE_USER:-bodymesh}
 SRC_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
 say() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
@@ -44,33 +44,33 @@ fi
 "$APP_DIR/.venv/bin/pip" install -q -e "$APP_DIR"
 
 say "environment file (fill this in, it is never committed)"
-if [ ! -f "$ENV_DIR/physarum.env" ]; then
-  cp "$APP_DIR/.env.example" "$ENV_DIR/physarum.env"
+if [ ! -f "$ENV_DIR/bodymesh.env" ]; then
+  cp "$APP_DIR/.env.example" "$ENV_DIR/bodymesh.env"
   sed -i "s#^# #" /dev/null 2>/dev/null || true
-  perl -0pi -e "s#PHYSARUM_HOME=.*#PHYSARUM_HOME=$DATA_DIR#; s#PHYSARUM_DB=.*#PHYSARUM_DB=$DATA_DIR/physarum.db#; s#PHYSARUM_INBOX=.*#PHYSARUM_INBOX=$DATA_DIR/inbox#; s#GARMINTOKENS=.*#GARMINTOKENS=$DATA_DIR/.garminconnect#" "$ENV_DIR/physarum.env"
-  chmod 600 "$ENV_DIR/physarum.env"
-  echo "  created $ENV_DIR/physarum.env — add PHYSARUM_LLM_KEY there"
+  perl -0pi -e "s#BODYMESH_HOME=.*#BODYMESH_HOME=$DATA_DIR#; s#BODYMESH_DB=.*#BODYMESH_DB=$DATA_DIR/bodymesh.db#; s#BODYMESH_INBOX=.*#BODYMESH_INBOX=$DATA_DIR/inbox#; s#GARMINTOKENS=.*#GARMINTOKENS=$DATA_DIR/.garminconnect#" "$ENV_DIR/bodymesh.env"
+  chmod 600 "$ENV_DIR/bodymesh.env"
+  echo "  created $ENV_DIR/bodymesh.env — add BODYMESH_LLM_KEY there"
 fi
 
 say "database"
 sudo -u "$SERVICE_USER" env \
-  PHYSARUM_HOME="$DATA_DIR" PHYSARUM_DB="$DATA_DIR/physarum.db" \
-  "$APP_DIR/.venv/bin/phy" init
+  BODYMESH_HOME="$DATA_DIR" BODYMESH_DB="$DATA_DIR/bodymesh.db" \
+  "$APP_DIR/.venv/bin/bm" init
 
 say "systemd units"
-install -m 0644 "$APP_DIR/scripts/systemd/physarum-sync.service" /etc/systemd/system/
-install -m 0644 "$APP_DIR/scripts/systemd/physarum-sync.timer" /etc/systemd/system/
+install -m 0644 "$APP_DIR/scripts/systemd/bodymesh-sync.service" /etc/systemd/system/
+install -m 0644 "$APP_DIR/scripts/systemd/bodymesh-sync.timer" /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable --now physarum-sync.timer
+systemctl enable --now bodymesh-sync.timer
 
 say "done"
 cat <<EOF
 
   code     $APP_DIR
-  data     $DATA_DIR/physarum.db
-  env      $ENV_DIR/physarum.env      <- put PHYSARUM_LLM_KEY here
+  data     $DATA_DIR/bodymesh.db
+  env      $ENV_DIR/bodymesh.env      <- put BODYMESH_LLM_KEY here
   logs     $LOG_DIR/daily.{json,err}
-  timer    systemctl list-timers physarum-sync
+  timer    systemctl list-timers bodymesh-sync
 
 Garmin tokens (copy from the machine that ran the device login):
 
@@ -81,7 +81,7 @@ Garmin tokens (copy from the machine that ran the device login):
 
 Then:
 
-  sudo -u $SERVICE_USER env \$(cat $ENV_DIR/physarum.env | xargs) $APP_DIR/.venv/bin/phy doctor
-  sudo -u $SERVICE_USER env \$(cat $ENV_DIR/physarum.env | xargs) $APP_DIR/.venv/bin/phy daily
+  sudo -u $SERVICE_USER env \$(cat $ENV_DIR/bodymesh.env | xargs) $APP_DIR/.venv/bin/bm doctor
+  sudo -u $SERVICE_USER env \$(cat $ENV_DIR/bodymesh.env | xargs) $APP_DIR/.venv/bin/bm daily
 
 EOF

@@ -7,7 +7,7 @@ Design notes
   migration.
 * ``activities`` and ``meals`` are event tables; ``body`` keeps weigh-ins.
 * ``insights`` is the *derived* layer: deterministic findings with evidence,
-  written by :mod:`physarum.insights` and read by the agent. Keeping findings
+  written by :mod:`bodymesh.insights` and read by the agent. Keeping findings
   out of the language model's head is what makes them reproducible.
 * ``briefs`` stores what was actually sent, so the morning message has an audit
   trail.

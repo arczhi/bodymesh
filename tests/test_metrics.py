@@ -4,7 +4,7 @@ import sqlite3
 
 import pytest
 
-from physarum import db, metrics
+from bodymesh import db, metrics
 
 
 @pytest.fixture()
@@ -68,7 +68,7 @@ def test_baseline_excludes_the_day_itself(conn):
 
 
 def test_sleep_debt_counts_only_short_nights(conn, monkeypatch):
-    monkeypatch.setenv("PHYSARUM_SLEEP_NEED_H", "8")
+    monkeypatch.setenv("BODYMESH_SLEEP_NEED_H", "8")
     for i, hours in enumerate([8, 7, 6, 9]):
         db.upsert(conn, "daily", {"date": f"2026-11-0{i + 5}", "sleep_s": int(hours * 3600)})
     debt = metrics.sleep_debt(conn, "2026-11-08", days=7)

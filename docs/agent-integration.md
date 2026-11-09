@@ -1,30 +1,30 @@
-# Wiring a chat assistant to Physarum
+# Wiring a chat assistant to Bodymesh
 
 Two halves: **data** (a cron job that keeps the database warm) and **voice** (a
-chat agent that reads `phy` and talks to you). They fail independently, which is
+chat agent that reads `bm` and talks to you). They fail independently, which is
 the point.
 
 ## 1. Data half: the 08:50 refresh
 
 ```bash
-# /etc/systemd/system/physarum-sync.service
+# /etc/systemd/system/bodymesh-sync.service
 [Unit]
-Description=Physarum Garmin sync + brief
+Description=Bodymesh Garmin sync + brief
 After=network-online.target
 
 [Service]
 Type=oneshot
-User=physarum
-EnvironmentFile=/etc/physarum/physarum.env
-ExecStart=/opt/physarum/.venv/bin/phy daily --json
-StandardOutput=append:/var/log/physarum/daily.json
-StandardError=append:/var/log/physarum/daily.err
+User=bodymesh
+EnvironmentFile=/etc/bodymesh/bodymesh.env
+ExecStart=/opt/bodymesh/.venv/bin/bm daily --json
+StandardOutput=append:/var/log/bodymesh/daily.json
+StandardError=append:/var/log/bodymesh/daily.err
 ```
 
 ```bash
-# /etc/systemd/system/physarum-sync.timer
+# /etc/systemd/system/bodymesh-sync.timer
 [Unit]
-Description=Physarum daily refresh (08:50 local)
+Description=Bodymesh daily refresh (08:50 local)
 
 [Timer]
 OnCalendar=*-*-* 08:50:00
@@ -39,12 +39,12 @@ instead of silently skipping a day.
 
 ## 2. Voice half: any agent that can run a command
 
-The contract is one line: **run `phy`, read JSON, narrate.** A cron entry with a
+The contract is one line: **run `bm`, read JSON, narrate.** A cron entry with a
 small script is a perfectly legitimate "agent".
 
 ### OpenClaw (WeChat / WhatsApp / Telegram / …)
 
-OpenClaw is a multi-channel gateway with a built-in scheduler. Physarum plugs in
+OpenClaw is a multi-channel gateway with a built-in scheduler. Bodymesh plugs in
 as a shell tool plus an `AGENTS.md`.
 
 **Provider** — DeepSeek is OpenAI-compatible, so declare it as a custom provider
@@ -75,18 +75,18 @@ in `~/.openclaw/openclaw.json5`:
 
 ```bash
 openclaw cron add \
-  --name "physarum-morning-brief" \
+  --name "bodymesh-morning-brief" \
   --cron "0 9 * * *" \
   --tz "Asia/Shanghai" \
   --session isolated \
   --announce \
   --channel weixin \
   --to "<your-weixin-id>" \
-  --message "Run: /opt/physarum/.venv/bin/phy daily --json
+  --message "Run: /opt/bodymesh/.venv/bin/bm daily --json
 Read the markdown field and the signals array. Then write a short Chinese
 message: 1) one-sentence verdict on yesterday, 2) the 1-2 numbers that matter,
 3) what to do today (concrete), 4) at most one question back.
-Follow AGENTS.md in /opt/physarum. Never invent a number."
+Follow AGENTS.md in /opt/bodymesh. Never invent a number."
 ```
 
 **Agent instructions** — point the agent's working directory at the repo, or copy
@@ -96,31 +96,31 @@ about it".
 
 ### Anything else
 
-- **Plain cron + webhook**: `phy daily --json | jq -r .markdown | curl -d @- ...`
+- **Plain cron + webhook**: `bm daily --json | jq -r .markdown | curl -d @- ...`
 - **Email**: same, piped to `msmtp`.
-- **A human**: `phy daily` in a terminal. It is designed to be readable.
+- **A human**: `bm daily` in a terminal. It is designed to be readable.
 
 ## 3. Interactive logging
 
 The chat agent needs three things to do photo logging well:
 
 1. The channel must save attachments to disk (WeChat plugins do; keep the path
-   stable, e.g. `$PHYSARUM_INBOX`).
-2. `phy meal add --image <path>` must be reachable by the agent's shell tool.
+   stable, e.g. `$BODYMESH_INBOX`).
+2. `bm meal add --image <path>` must be reachable by the agent's shell tool.
 3. `AGENTS.md` must tell it to ask one clarifying question when
    `confidence < 0.5`.
 
-The estimator call goes to `PHYSARUM_VISION_MODEL` at `PHYSARUM_LLM_BASE` with a
+The estimator call goes to `BODYMESH_VISION_MODEL` at `BODYMESH_LLM_BASE` with a
 strict JSON schema, so a photo never depends on the chat model being
 multimodal — the same model family can be used for both, or you can point
-`PHYSARUM_LLM_BASE` at anything OpenAI-compatible.
+`BODYMESH_LLM_BASE` at anything OpenAI-compatible.
 
 ## 4. Health checks
 
 ```bash
-phy doctor                    # tokens, key, counts, latest day
-systemctl list-timers physarum-sync
-tail -n 20 /var/log/physarum/daily.err
+bm doctor                    # tokens, key, counts, latest day
+systemctl list-timers bodymesh-sync
+tail -n 20 /var/log/bodymesh/daily.err
 ```
 
 If `doctor` says `garmin tokens MISSING`, re-run the Garmin device-flow login on

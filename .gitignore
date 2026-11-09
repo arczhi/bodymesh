@@ -4,7 +4,7 @@
 !.env.example
 *.key
 *.pem
-**/physarum.env
+**/bodymesh.env
 garmin_tokens.json
 .garminconnect/
 *.token

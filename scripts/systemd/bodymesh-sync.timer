@@ -1,5 +1,5 @@
 [Unit]
-Description=Physarum daily refresh (08:50 Asia/Shanghai)
+Description=Bodymesh daily refresh (08:50 Asia/Shanghai)
 
 [Timer]
 OnCalendar=*-*-* 08:50:00

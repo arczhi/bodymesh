@@ -1,0 +1,20 @@
+[Unit]
+Description=Bodymesh: Garmin sync + findings + daily brief
+Documentation=https://github.com/arczhi/bodymesh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=bodymesh
+Group=bodymesh
+EnvironmentFile=/etc/bodymesh/bodymesh.env
+WorkingDirectory=/opt/bodymesh
+ExecStart=/opt/bodymesh/.venv/bin/bm daily --json
+StandardOutput=append:/var/log/bodymesh/daily.json
+StandardError=append:/var/log/bodymesh/daily.err
+# the model key and the tokens are the only sensitive inputs
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/bodymesh /var/log/bodymesh
+NoNewPrivileges=true

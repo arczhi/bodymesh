@@ -7,7 +7,7 @@ and "you ran hard" are two facts; *"your resting heart rate is still +4 bpm two
 days after that 6 km tempo run, and the night after it your REM collapsed to
 5%"* is a finding. Findings need a graph, and a graph needs a schema.
 
-Physarum is that schema with a CLI bolted on. The assistant is downstream of it,
+Bodymesh is that schema with a CLI bolted on. The assistant is downstream of it,
 never inside it.
 
 ```
@@ -33,10 +33,10 @@ that contract with fewer moving parts:
 - no daemon to keep alive on a 1.6 GB VPS;
 - failure modes are exit codes, not dangling transports.
 
-If you *do* want MCP, the adapter is ~40 lines: wrap each `phy ... --json`
+If you *do* want MCP, the adapter is ~40 lines: wrap each `bm ... --json`
 invocation in a tool definition. The architecture does not change.
 
-## Layers inside `physarum.db`
+## Layers inside `bodymesh.db`
 
 | Layer | Tables | Mutability | Purpose |
 |---|---|---|---|
@@ -44,7 +44,7 @@ invocation in a tool definition. The architecture does not change.
 | Derived | `insights` | recomputed per date | findings with `evidence` JSON |
 | Output | `briefs` | append per date | what was actually said, for audit |
 
-Idempotency matters: `phy sync --days 7` can run hourly. It upserts on
+Idempotency matters: `bm sync --days 7` can run hourly. It upserts on
 `(date)`, `(activity id)`, and de-duplicates weigh-ins on `(date, weight)`.
 
 ## The statistics, honestly
@@ -90,5 +90,5 @@ over every weigh-in rather than first-vs-last.
 | New source (Withings, Oura, Apple Health) | add `ingest/<name>.py` returning `daily` rows, wire into `sync` |
 | New metric | add a column to `daily`, add the field to `garmin.daily_row` |
 | New finding | one function in `insights.py` returning a `_finding(...)` |
-| New output channel | anything that reads `phy daily --json` |
-| Different model | `PHYSARUM_LLM_BASE` + `PHYSARUM_VISION_MODEL` |
+| New output channel | anything that reads `bm daily --json` |
+| Different model | `BODYMESH_LLM_BASE` + `BODYMESH_VISION_MODEL` |

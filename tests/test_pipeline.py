@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from physarum import brief, db, insights, meals, metrics
+from bodymesh import brief, db, insights, meals, metrics
 
 
 @pytest.fixture()
@@ -155,7 +155,7 @@ def test_meal_slot_inference():
 
 
 def test_manual_meal_roundtrip(tmp_path, monkeypatch):
-    monkeypatch.setenv("PHYSARUM_DB", str(tmp_path / "m.db"))
+    monkeypatch.setenv("BODYMESH_DB", str(tmp_path / "m.db"))
     db.init(tmp_path / "m.db")
     out = meals.add_meal(description="牛肉面", kcal=780, protein_g=32, ts="2026-11-09T12:30:00", analyze=False)
     assert out["slot"] == "lunch"
@@ -173,7 +173,7 @@ def test_extract_json_tolerates_code_fences():
 
 
 def test_vision_requires_a_key(monkeypatch, tmp_path):
-    for var in ("PHYSARUM_LLM_KEY", "DEEPSEEK_API_KEY", "OPENAI_API_KEY"):
+    for var in ("BODYMESH_LLM_KEY", "DEEPSEEK_API_KEY", "OPENAI_API_KEY"):
         monkeypatch.delenv(var, raising=False)
     with pytest.raises(RuntimeError):
         meals.analyze_image(tmp_path / "x.jpg")

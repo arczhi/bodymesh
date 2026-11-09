@@ -1,4 +1,4 @@
-"""``phy`` — the command line the assistant (and you) actually talk to.
+"""``bm`` — the command line the assistant (and you) actually talk to.
 
 Every command prints human text by default and machine JSON with ``--json``.
 That single convention is what lets a chat agent use this as a tool surface
@@ -299,7 +299,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="phy", description="Physarum: a living data mesh for your body")
+    p = argparse.ArgumentParser(prog="bm", description="Bodymesh: every number your body produces, woven into one mesh")
     p.add_argument("--json", action="store_true", default=argparse.SUPPRESS,
                    help="machine-readable output (works before or after the verb)")
     common = argparse.ArgumentParser(add_help=False)

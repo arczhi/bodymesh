@@ -11,10 +11,10 @@ test:  ## run the test suite
 	. .venv/bin/activate && python -m pytest -q
 
 brief:  ## render yesterday's brief
-	. .venv/bin/activate && phy daily
+	. .venv/bin/activate && bm daily
 
 daily:  ## the 09:00 job
-	. .venv/bin/activate && phy daily --json
+	. .venv/bin/activate && bm daily --json
 
 clean:  ## remove caches
 	rm -rf .pytest_cache .ruff_cache build dist *.egg-info
