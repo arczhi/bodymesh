@@ -194,6 +194,30 @@ Then enable the channel:
 
 `allowFrom` is the important field — see trap #3.
 
+### 2.3b Live answers vs the 08:50 cache
+
+The scheduled sync is not enough for chat: a question at 14:00 must not be
+answered with 08:50's numbers. `bm fresh` closes that gap — it pulls Garmin only
+when the cache is older than N minutes (default 10) and is a ~40 ms no-op
+otherwise, then prints the same markdown the brief uses:
+
+```
+$ time bm fresh                     # cold
+已拉取 Garmin 最新数据（2026-11-08→2026-11-10）
+…                                                          4.9 s
+$ time bm fresh                     # warm
+使用 0.0 分钟前的缓存（<=10 分钟，未拉取）                    0.04 s
+```
+
+`bm fresh --json` also returns `last_sync_at` and `cache_age_minutes`, so the
+assistant can *state* how fresh an answer is instead of guessing. Teach it in
+`AGENTS.md` as **Rule 0**: live questions always start with `bm fresh`, and
+`bm daily --no-sync` is reserved for the 09:00 cron job.
+
+This exact distinction is what a user notices first: without it the assistant is
+honest but stale, and it will invent explanations for the gaps ("the sync runs at
+08:50, so tonight's sleep will appear then") that are simply wrong.
+
 ### 2.4 The 09:00 brief
 
 Create it through the service API, **not** by editing `jobs.json` (trap #2):

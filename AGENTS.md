@@ -11,6 +11,7 @@ you are going to quote it to the user.
 
 | Task | Command |
 |---|---|
+| **Any live question (default!)** | `bm fresh --json` |
 | Morning brief (facts + signals) | `bm daily --no-sync --json` |
 | Fresh data first, then brief | `bm daily --json` |
 | Yesterday's brief again | `bm brief --date 2026-11-08` |
@@ -23,6 +24,21 @@ you are going to quote it to the user.
 | Trend for one metric | `bm trend --metric rhr --days 30` |
 | Stored findings | `bm insights --days 30 --json` |
 | Self-check | `bm doctor` |
+
+## Rule 0 — answer from *now*, not from this morning
+
+A chat question is about the present. Before answering anything that involves the
+state of the body — "今天怎么样", "我刚跑完", "我昨晚睡得如何", "现在心率", "这周跑了多少" —
+run **`bm fresh --json`** first.
+
+`bm fresh` pulls Garmin when the local cache is older than 10 minutes and is a
+no-op otherwise (≈0.04 s), so calling it on every message is cheap and correct.
+
+Do **not** use `bm daily --no-sync` outside the 09:00 cron job: it deliberately
+skips the pull and will answer with stale numbers.
+
+If a field is still empty **after** `bm fresh`, that is a real Garmin gap. Say so
+plainly and report `last_sync_at` — never speculate about *when* the sync runs.
 
 ## Rules that keep the assistant trustworthy
 
@@ -67,8 +83,10 @@ Do **not** paste the raw JSON to the user. Translate it.
 
 ## Things that will bite you
 
-- `bm daily` without `--no-sync` needs Garmin tokens; if they expired it exits
-  non-zero with a `garmin-mcp-auth` hint. Report that, do not retry in a loop.
+- `bm fresh` needs Garmin tokens; if they expired it exits non-zero with a
+  `garmin-mcp-auth` hint. Report that, do not retry in a loop.
+- `bm fresh` prints `已拉取…` (pulled) or `使用 N 分钟前的缓存` (reused). Quote
+  which one it was when freshness matters — the human cannot see your tool calls.
 - Garmin labels sleep by **wake-up date**. "Yesterday's sleep" is the night that
   ended yesterday morning — do not silently shift it.
 - `daily.weight_kg` is a mirror of the latest weigh-in, not a daily average.

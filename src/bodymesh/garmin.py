@@ -267,6 +267,8 @@ def sync(days: int = 7, end: str | None = None, with_activities: bool = True) ->
         written["body"] = sync_body(conn, g, start, finish)
         if with_activities:
             written["activities"] = sync_activities(conn, g, start, finish)
+        # Stamp the sync so `bm fresh` can decide whether a live pull is worth it.
+        db.set_meta(conn, "last_sync_at", datetime.now(config.tz()).isoformat(timespec="seconds"))
         conn.commit()
     finally:
         conn.close()

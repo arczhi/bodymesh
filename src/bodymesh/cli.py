@@ -115,6 +115,73 @@ def cmd_daily(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_fresh(args: argparse.Namespace) -> int:
+    """Answer a live question: pull Garmin if the cache is stale, then report.
+
+    Chat is the reason this exists. A question asked at 14:00 must not be
+    answered with 08:50's numbers, but hammering Garmin on every message is rude
+    to the API and slow for the human. So: pull when the cache is older than
+    ``max_age`` minutes, otherwise reuse it and say how old it is.
+    """
+    age_min: float | None = None
+    last_sync: str | None = None
+    conn = _connect()
+    try:
+        last_sync = db.get_meta(conn, "last_sync_at")
+    finally:
+        conn.close()
+
+    if last_sync:
+        try:
+            age_min = round(
+                (datetime.now(config.tz()) - datetime.fromisoformat(last_sync)).total_seconds() / 60, 1
+            )
+        except ValueError:
+            age_min = None
+
+    pulled = None
+    if not args.no_sync and (age_min is None or age_min > args.max_age):
+        pulled = garmin.sync(days=args.days)
+        last_sync = db.get_meta(_connect(), "last_sync_at")
+
+    conn = _connect()
+    try:
+        day = args.date or _today()
+        data = brief_mod.build(conn, day)
+        markdown = brief_mod.render_markdown(data)
+        fresh_for = db.daily(conn, day)
+        today_view = {
+            "date": day,
+            "steps": fresh_for.get("steps"),
+            "active_kcal": fresh_for.get("active_kcal"),
+            "rhr": fresh_for.get("rhr"),
+            "stress_avg": fresh_for.get("stress_avg"),
+            "sleep_s": fresh_for.get("sleep_s"),
+            "bb_current_hint": fresh_for.get("bb_low"),
+            "intensity_min": fresh_for.get("intensity_min"),
+            "signals": data["signals"],
+        }
+    finally:
+        conn.close()
+
+    payload = {
+        "date": day,
+        "synced": pulled["written"] if pulled else None,
+        "sync_warnings": (pulled or {}).get("warnings", []),
+        "last_sync_at": last_sync,
+        "cache_age_minutes": age_min if not pulled else 0,
+        "today": today_view,
+        "markdown": markdown,
+    }
+    header = (
+        f"已拉取 Garmin 最新数据（{pulled['range'][0]}→{pulled['range'][1]}）"
+        if pulled
+        else f"使用 {age_min} 分钟前的缓存（<={args.max_age} 分钟，未拉取）"
+    )
+    _emit(payload, args.json, f"{header}\n\n{markdown}")
+    return 0
+
+
 def cmd_status(args: argparse.Namespace) -> int:
     conn = _connect()
     try:
@@ -331,6 +398,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--days", type=int, default=3)
     sp.add_argument("--no-sync", action="store_true")
     sp.set_defaults(func=cmd_daily)
+
+    sp = sub.add_parser("fresh", help="live answer: sync if stale, then report", parents=[common])
+    sp.add_argument("--max-age", type=float, default=10, help="minutes before a live pull (default 10)")
+    sp.add_argument("--days", type=int, default=2)
+    sp.add_argument("--date", default=None)
+    sp.add_argument("--no-sync", action="store_true")
+    sp.set_defaults(func=cmd_fresh)
 
     sp = sub.add_parser("status", help="compact snapshot", parents=[common])
     sp.add_argument("--date", default=None)

@@ -82,9 +82,10 @@ Everything is `bm <verb>`; add `--json` to any command for machine output.
 |---|---|
 | `bm init` | create the SQLite database |
 | `bm sync --days 14` | pull Garmin: daily wellness, activities, weigh-ins |
+| `bm fresh` | **live answer**: pull Garmin if the cache is >10 min old, then report |
 | `bm daily` | sync + recompute findings + render the brief (the cron job) |
 | `bm brief --date 2026-11-08` | re-render any day's brief |
-| `bm status` | compact snapshot for "how am I doing?" |
+| `bm status` | compact snapshot, no network |
 | `bm meal add --image lunch.jpg` | photo → structured nutrition |
 | `bm meal add -d "牛肉面" --kcal 780 --protein 32` | manual meal |
 | `bm meal list` | today's meals |
